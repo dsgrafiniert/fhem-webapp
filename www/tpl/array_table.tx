@@ -1,0 +1,12 @@
+<div class='makeTable wide'>
+	<: $txt :>
+	<table class="block wide <: $class :>">
+: for $rows -> $row {
+		<tr class="<: $row_class :>">
+			<td><: $row.link :></td>
+			<td><: $row.defs :></td>
+			<td> </td>
+		</tr>
+: }
+	</table>
+</div>

@@ -1,0 +1,144 @@
+      <div class="starter-template">
+        <div class="row">
+            <h1><: $roomname :></h1>
+			<br />
+
+: for $groupedDevices.keys() -> $group {
+            <div class="row">
+			    <h4><: $group :></h4>
+: for $groupedDevices[$group] -> $device {
+			    <div class="col-md-4">
+				    <div class="panel panel-default ">
+					    <div class="panel-heading"><: $device.icon :><: $device.name :></div>
+					    <div class="panel-body">
+						    <div class="btn btn-primary disabled"><: $device.state :></div>
+						    <div class="pull-right">
+							    <form class="form-inline pull-right" role="form">
+								    <div class="form-group">
+									    <label class="sr-only" for="desiredTemperature">desiredTemperature</label>
+									    <select id="desiredTemperature" class="form-control form-inline">
+									      <option>auto</option>
+									      <option>boost</option>
+									      <option>eco</option>
+									      <option>comfort</option>
+									      <option>off</option>
+									      <option>21</option>
+									      <option selected>22</option>
+									      <option>23</option>
+									    </select>
+								    </div>
+							    </form>
+						    </div>
+					    </div>
+				    </div>
+			    </div>
+: } 
+            </div>
+: }
+<!--
+			<div class="col-md-4">
+				<div class="panel panel-default ">
+					<div class="panel-heading">[icon] Therm. Wohnzimmer mi.</div>
+					<div class="panel-body">
+						<div class="btn btn-primary disabled">22.9°C</div>
+						<div class="pull-right">
+							<form class="form-inline pull-right" role="form">
+								<div class="form-group">
+									<label class="sr-only" for="desiredTemperature">desiredTemperature</label>
+									<select id="desiredTemperature" class="form-control form-inline">
+									  <option>auto</option>
+									  <option>boost</option>
+									  <option>eco</option>
+									  <option>comfort</option>
+									  <option>off</option>
+									  <option>21</option>
+									  <option selected>22</option>
+									  <option>23</option>
+									</select>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="panel panel-default ">
+					<div class="panel-heading">[icon] Therm. Wohnzimmer re.</div>
+					<div class="panel-body">
+                        <div class="btn btn-primary disabled">22.9°C</div>
+						<div class="pull-right">
+							<form class="form-inline pull-right" role="form">
+								<div class="form-group">
+									<label class="" for="desiredTemperature">desiredTemperature</label>
+									<select id="desiredTemperature" class="form-control form-inline">
+									  <option>auto</option>
+									  <option>boost</option>
+									  <option>eco</option>
+									  <option>comfort</option>
+									  <option>off</option>
+									  <option>21</option>
+									  <option selected>22</option>
+									  <option>23</option>
+									</select>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+        </div>
+        <div class="row">
+		    <h4>Licht</h4>
+		    <div class="col-md-4">
+			    <div class="panel panel-default ">
+                   <div class="panel-heading hover">
+                        <a href="#/fhem?device=Standlampe">[icon] Standlampe</a>
+                    </div>
+				    <div class="panel-body">
+                        <div class="btn btn-primary disabled">Off</div>
+					    <span class="pull-right">
+						    <div class="btn-group " data-toggle="buttons">
+						      <label class="btn btn-default btn">
+							    <input type="radio" name="onoff" id="option.on">On
+						      </label>
+						      <label class="btn btn-default active btn">
+							    <input type="radio" name="onoff" id="option.off">Off
+						      </label>
+						    </div>
+					    </span>
+				    </div>
+			    </div>
+		    </div>
+		    <div class="col-md-4">
+			    <div class="panel panel-default ">
+                   <div class="panel-heading">[icon] Deckenleuchte</div>
+				    <div class="panel-body">
+                        <div class="btn btn-primary disabled">On</div>
+					    <span class="pull-right">
+						    <div class="btn-group " data-toggle="buttons">
+						      <label class="btn btn-default active btn">
+							    <input type="radio" name="onoff" id="option.on">On
+						      </label>
+						      <label class="btn btn-default btn">
+							    <input type="radio" name="onoff" id="option.off">Off
+						      </label>
+						    </div>
+					    </span>
+				    </div>
+			    </div>
+		    </div>
+	    </div>
+        <div class="row">
+		    <h4>Anwesend</h4>
+		    <div class="col-md-4">
+			    <div class="panel panel-default ">
+                    <div class="panel-heading">[icon] Handy</div>
+			        <div class="panel-body">
+                        <div class="btn btn-primary disabled">present</div>
+				    </div>
+			    </div>
+		    </div>
+        </div>
+-->
+	</div>
+  </div>

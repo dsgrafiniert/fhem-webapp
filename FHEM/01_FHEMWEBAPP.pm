@@ -2228,20 +2228,22 @@ FWA_dropdownFn()
       $txt =~ s/$cmd //;
     }
 
-    my $fpname = $FWA_wname;
-    $fpname =~ s/.*floorplan\/(\w+)$/$1/;  #allow usage of attr fp_setbutton
-    my $fwsel;
-    $fwsel = ($cmd eq "state" ? "" : "$cmd&nbsp;") .
-             FWA_select("$d-$cmd","val.$d", \@tv, $txt,"dropdown","submit()").
-             FWA_hidden("cmd.$d", "set");
+    my $select = {
+      title => $cmd eq "state" ? "" : "$cmd&nbsp;",
+      id => "$d-$cmd",
+      name => "val.$d",
+      values => \@tv,
+      default => $txt,
+      class => "dropdown",
+    };
 
-    return "<td colspan='2'><form method=\"$FWA_formmethod\">".
-      FWA_hidden("arg.$d", $cmd) .
-      FWA_hidden("dev.$d", $d) .
-      ($FWA_room ? FWA_hidden("room", $FWA_room) : "") .
-      "$fwsel</form></td>";
+    return FWA_render("dropdown.tx", {
+        formmethod => $FWA_formmethod,
+        device => $d,
+        select => $select,
+      });
   }
-  return undef;
+  return "";
 }
 
 sub

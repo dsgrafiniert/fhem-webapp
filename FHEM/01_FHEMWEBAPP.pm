@@ -1110,13 +1110,12 @@ FWA_roomDetail()
       my $class = ($row&1)?"odd":"even";
       my $devName = AttrVal($d, "alias", $d);
       my $icon = AttrVal($d, "icon", "");
-      my $state = $defs{$d}{STATE};
       $icon = FWA_makeImage($icon,$icon,"icon") . "&nbsp;" if($icon);
       my $hiddenroom = $FWA_hiddenroom{detail};
              
       $row++;
 
-      my ($allSets, $cmdlist, $txt) = FWA_devState($d, $rf, \%extPage);
+      my ($allSets, $cmdlist, $devicestate, $link, $style) = FWA_devState($d, $rf, \%extPage);
       my $colSpan = ($usuallyAtEnd{$d} ? '2' : '');
 
       ######
@@ -1147,8 +1146,10 @@ FWA_roomDetail()
         device => $d,
         type => $type,
         class => $class,
+        link => $link,
+        style => $style,
         name => $devName,
-        state => $state,
+        state => $devicestate,
         icon => mark_raw($icon),
         hiddenroom => $hiddenroom,
         allSets => $allSets,
@@ -1659,8 +1660,11 @@ FWA_makeImage(@)
       return $name;
     }
   } else {
-    $class = "class='$class'" if($class);
-    return "<img $class src=\"$FWA_ME/images/$p\" alt=\"$txt\" title=\"$txt\">";
+    return FWA_render("image.tx", {
+      class => $class,
+      src => "$FWA_ME/images/$p",
+      txt => "$txt",
+    });
   }
 }
 
@@ -2005,13 +2009,13 @@ FWA_devState($$@)
     $txt = $v if(defined($v));
 
   } elsif($allSets =~ m/\bdesired-temp:/) {
-    $txt = "$1 &deg;C" if($txt =~ m/^measured-temp: (.*)/);      # FHT fix
+    $txt = "$1 °C" if($txt =~ m/^measured-temp: (.*)/);      # FHT fix
     $cmdList = "desired-temp" if(!$cmdList);
 
   } elsif($allSets =~ m/\bdesiredTemperature:/) {
     $txt = ReadingsVal($d, "temperature", "");  # ignores stateFormat!!!
     $txt =~ s/ .*//;
-    $txt .= "&deg;C";
+    $txt .= "°C";
     $cmdList = "desiredTemperature" if(!$cmdList);
 
   } else {
@@ -2032,6 +2036,7 @@ FWA_devState($$@)
 
   }
 
+  my $style = AttrVal($d, "devStateStyle", "");
   if($link) { # Have command to execute
     my $room = AttrVal($d, "room", undef);
     if($room) {
@@ -2042,20 +2047,17 @@ FWA_devState($$@)
       }
       $link .= "&room=$room";
     }
+    
     if(AttrVal($FWA_wname, "longpoll", 1)) {
-      $txt = "<a onClick=\"FWA_cmd('$FWA_ME$FWA_subdir?XHR=1&$link')\">$txt</a>";
-
+      $link = "$FWA_ME$FWA_subdir?XHR=1&$link";
+      $style .= " longpoll";
     } elsif($FWA_ss || $FWA_tp) {
-      $txt ="<a onClick=\"location.href='$FWA_ME$FWA_subdir?$link$rf'\">$txt</a>";
-
+      $style .= " onclick";
+      $link = "$FWA_ME$FWA_subdir?$link$rf";
     } else {
-      $txt = "<a href=\"$FWA_ME$FWA_subdir?$link$rf\">$txt</a>";
-
+      $link = "$FWA_ME$FWA_subdir?$link$rf";
     }
   }
-
-  my $style = AttrVal($d, "devStateStyle", "");
-  $txt = "<div id=\"$d\" $style class=\"col2\">$txt</div>";
 
   my $type = $defs{$d}{TYPE};
   my $sfn = $modules{$type}{FWA_summaryFn};
@@ -2070,7 +2072,7 @@ FWA_devState($$@)
     $txt = $newtxt if(defined($newtxt)); # As specified
   }
 
-  return ($allSets, $cmdList, $txt);
+  return ($allSets, $cmdList, mark_raw($txt), $link, $style);
 }
 
 

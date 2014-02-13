@@ -1,0 +1,12 @@
+	<form class="form-inline" role="form" method="<:$formmethod:>">
+		<div class="pull-left">
+			<input class="form-control btn btn-sm btn-primary" type="submit" name="save" value="Save <: $file :>" /><br />
+		</div>
+		<div class="pull-right">
+			<input class="form-control btn btn-sm btn-default" type="submit" name="saveAs" value="Save as" />
+			<input class="form-control" type="text" name="saveName" class="saveName" size="30" value="<: $file :>"/>
+		</div>
+		<br><br>
+		<input type="hidden" name="cmd" value="style save <: $file :>"/>
+		<textarea class="form-control" name="data" cols="80" style="width: 100%" rows="30"><: $text :></textarea>
+	</form>

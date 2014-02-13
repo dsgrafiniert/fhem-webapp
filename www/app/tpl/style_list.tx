@@ -1,0 +1,11 @@
+: if $msg {
+<div class="alert alert-warning"><: $msg :></div>
+: }
+: for $groups -> $group {
+<h4><: $group.name :></h4>
+<ul class="list-group">
+: for $group.items -> $item {
+	<li class="list-group-item"><a href="<:$baseuri:>?cmd=style edit <:$item:>"><:$item:></a></li>
+: }
+</ul>
+: }

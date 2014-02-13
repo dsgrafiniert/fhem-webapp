@@ -49,7 +49,7 @@ use vars qw($FWA_dir);     # base directory for web server
 use vars qw($FWA_icondir); # icon base directory
 use vars qw($FWA_appdir);  # css directory
 use vars qw($FWA_gplotdir);# gplot directory
-use vars qw($MW_dir);     # moddir (./FHEM), needed by edit Files in new
+use vars qw($MWA_dir);     # moddir (./FHEM), needed by edit Files in new
                           # structure
 
 use vars qw($FWA_ME);      # webname (default is fhem), used by 97_GROUP/weblink
@@ -157,12 +157,12 @@ FHEMWEBAPP_Initialize($)
   map { addToAttrList($_) } ( "webCmd", "icon", "devStateIcon",
                                 "sortby", "devStateStyle");
   InternalTimer(time()+60, "FWA_closeOldClients", 0, 0);
-
+  
   $FWA_dir      = "$attr{global}{modpath}/www";
   $FWA_icondir  = "$FWA_dir/images";
   $FWA_appdir   = "$FWA_dir/app";
   $FWA_gplotdir = "$FWA_dir/gplot";
-  if(opendir(DH, "$FWA_appdir")) {
+  if(opendir(DH, "$FWA_appdir/js")) {
     @FWA_fhemwebjs = sort grep /^fhemweb.*js$/, readdir(DH);
     closedir(DH);
   }
@@ -409,7 +409,7 @@ FWA_answerCall($)
   $FWA_RETTYPE = "text/html; charset=$FWA_encoding";
   $FWA_ME = "/" . AttrVal($FWA_wname, "webname", "fhem");
 
-  $MW_dir = "$attr{global}{modpath}/FHEM";
+  $MWA_dir = "$attr{global}{modpath}/FHEM";
   $FWA_sp = AttrVal($FWA_wname, "stylesheetPrefix", "");
   $FWA_ss = ($FWA_sp =~ m/smallscreen/);
   $FWA_tp = ($FWA_sp =~ m/smallscreen|touchpad/);
@@ -592,7 +592,6 @@ FWA_answerCall($)
   push(@scripts, "$FWA_ME/pgm2/svg.js") if($FWA_plotmode eq "SVG");
   if($FWA_plotmode eq"jsSVG") {
     push(@scripts, "$FWA_ME/pgm2/jsSVG.js");
-    push(@scripts, "$FWA_ME/pgm2/jquery.min.js");
   }
   foreach my $js (@FWA_fhemwebjs) {
     push(@scripts, "$FWA_ME/pgm2/$js");
@@ -641,7 +640,7 @@ FWA_answerCall($)
       title => $t,
       favicon => FWA_IconURL("favicon"),
       refresh => $rf,
-      stylesheet => "$FWA_ME/pgm2/style.css",
+      stylesheet => "$FWA_ME/app/css/style.css",
       scripts => \@scripts,
       onload => mark_raw($onload),
       menus => $menus,
@@ -1379,7 +1378,7 @@ FWA_fileNameToPath($)
   } elsif($name =~ m/.*gplot$/) {
     return "$FWA_gplotdir/$name";
   } else {
-    return "$MW_dir/$name";
+    return "$MWA_dir/$name";
   }
 }
 
@@ -1395,20 +1394,32 @@ FWA_style($$)
   my $end   = "</td></tr></table></div>";
   
   if($a[1] eq "list") {
-    FWA_pO $start;
-    FWA_pO "$msg<br><br>" if($msg);
-
     $attr{global}{configfile} =~ m,([^/]*)$,;
-    my $cfgFileName = $1;
-    FWA_displayFileList("config file", $cfgFileName);
-    FWA_displayFileList("Own modules and helper files",
-        FWA_fileList("$MW_dir/^(.*sh|[0-9][0-9].*Util.*pm|.*cfg|.*holiday".
-                                  "|.*layout)\$"));
-    FWA_displayFileList("styles",
-        FWA_fileList("$FWA_appdir/^.*(css|svg)\$"));
-    FWA_displayFileList("gplot files",
-        FWA_fileList("$FWA_gplotdir/^.*gplot\$"));
-    FWA_pO $end;
+    my @cfg = ($1,);
+    my @modules = FWA_fileList("$MWA_dir/^(.*sh|[0-9][0-9].*Util.*pm|.*cfg|.*holiday"."|.*layout)\$");
+    my @styles = FWA_fileList("$FWA_appdir/css/^.*(css|svg)\$");
+    my @gplots = FWA_fileList("$FWA_gplotdir/^.*gplot\$");
+    my @groups = ({
+          name => "FHEM Config file",
+          items => \@cfg,
+        },{
+          name => "Own modules and helper files",
+          items => \@modules,
+        },{
+          name => "Styles & SVGs",
+          items => \@styles,
+        },{
+          name => "GPLOT Files",
+          items => \@gplots,
+        });
+        
+    my $data = {
+      msg => $msg,
+      groups => \@groups,
+      baseuri => "$FWA_ME$FWA_subdir",
+    };
+
+    return $FWA_xslate->render("style_list.tx", $data);
 
   } elsif($a[1] eq "select") {
     my @fl = grep { $_ !~ m/(floorplan|dashboard)/ } FWA_fileList("$FWA_appdir/.*style.css");
@@ -1437,29 +1448,20 @@ FWA_style($$)
     my $fileName = $a[2]; 
     $fileName =~ s,.*/,,g;        # Little bit of security
     my $filePath = FWA_fileNameToPath($fileName);
+    my $error = "";
     if(!open(FH, $filePath)) {
-      FWA_pO "<div id=\"content\">$filePath: $!</div>";
-      return;
+      return $FWA_xslate->render("error.tx", { error => "$filePath: $!"});
     }
     my $data = join("", <FH>);
     close(FH);
 
     $data =~ s/&/&amp;/g;
-	
-    my $ncols = $FWA_ss ? 40 : 80;
-    FWA_pO "<div id=\"content\">";
-    FWA_pO "<form method=\"$FWA_formmethod\">";
-    FWA_pO     FWA_submit("save", "Save $fileName");
-    FWA_pO     "&nbsp;&nbsp;";
-    FWA_pO     FWA_submit("saveAs", "Save as");
-    FWA_pO     FWA_textfieldv("saveName", 30, "saveName", $fileName);
-    FWA_pO     "<br><br>";
-    FWA_pO     FWA_hidden("cmd", "style save $fileName");
-    FWA_pO     "<textarea name=\"data\" cols=\"$ncols\" rows=\"30\">" .
-                "$data</textarea>";
-    FWA_pO "</form>";
-    FWA_pO "</div>";
-
+    
+    return $FWA_xslate->render("style_edit.tx", {
+      file => $fileName,
+      text => $data,
+      formmethod => $FWA_formmethod,
+    });
   } elsif($a[1] eq "save") {
     my $fileName = $a[2];
     $fileName = $FWA_webArgs{saveName}
@@ -1468,8 +1470,7 @@ FWA_style($$)
     my $filePath = FWA_fileNameToPath($fileName);
 
     if(!open(FH, ">$filePath")) {
-      FWA_pO "<div id=\"content\">$filePath: $!</div>";
-      return;
+      return $FWA_xslate->render("error.tx", { error => "$filePath: $!"});
     }
     $FWA_data =~ s/\r//g if($^O !~ m/Win/);
     binmode (FH);
@@ -1478,9 +1479,8 @@ FWA_style($$)
 
     my $ret = FWA_fC("rereadcfg") if($filePath eq $attr{global}{configfile});
     $ret = FWA_fC("reload $fileName") if($fileName =~ m,\.pm$,);
-    $ret = ($ret ? "<h3>ERROR:</h3><b>$ret</b>" : "Saved the file $fileName");
-    FWA_style("style list", $ret);
-    $ret = "";
+    $ret = ($ret ? "$ret" : "Saved the file $fileName");
+    return FWA_style("style list", $ret);
 
   } elsif($a[1] eq "iconFor") {
     FWA_iconTable("iconFor", "icon", "style setIF $a[2] %s", undef);

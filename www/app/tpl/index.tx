@@ -6,19 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="shortcut icon" href="/fhem/pgm2/favicon.ico">
+    <link rel="shortcut icon" href="/fhem/app/favicon.ico">
 
     <title><: $title :></title>
-
-	<link rel="stylesheet" href="/fhem/pgm2/css/bootstrap.min.css">
-    <link href="/fhem/pgm2/css/style.css" rel="stylesheet">
+	<link rel="stylesheet" href="/fhem/app/css/bootstrap.min.css">
+: if $refresh {
+	<meta http-equiv="refresh" content="<: $refresh :>">
+: }
+	<link rel="stylesheet" href="<:$stylesheet:>"/>
+: for $scripts -> $script {
+	<script type="text/javascript" src="<: $script :>"></script>
+: }
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-
   <body>
 
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -30,10 +34,8 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/fhem"><: $title :>
-			<a class="navbar-btn btn btn-default pull-left">
-				<span>Save Config</span></a>
-			</a>
+          <a class="navbar-brand" href="/fhem"><: $title :></a>
+          <a class="navbar-btn btn btn-default pull-left"><span>Save Config</span></a>
         </div>
 		
         <div class="collapse navbar-collapse">
@@ -72,7 +74,7 @@
           <div class="navbar-right col-md-4">
 		  <form class="navbar-form" role="search">
             <div class="input-group">
-                <span class="input-group-addon">$></span>
+                <span class="input-group-addon">$&gt;</span>
     			<input type="text" class="form-control" style="width: 100%" placeholder="Command">
             </div>
 		  </form></div>
@@ -81,16 +83,16 @@
     </div>
 
     <div class="container">
-
+		<div class="row"><br />
 <: $content :>
-
+		</div>
     </div><!-- /.container -->
 
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-    <script src="/fhem/pgm2/js/bootstrap.min.js"></script>
+    <!--<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>-->
+    <script src="/fhem/app/js/bootstrap.min.js"></script>
   </body>
 </html>

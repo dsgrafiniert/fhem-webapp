@@ -44,6 +44,7 @@ sub FWA_submit($$@);
 sub FWA_textfield($$$);
 sub FWA_textfieldv($$$$);
 sub FWA_updateHashes();
+sub FWA_render($$);
 
 use vars qw($FWA_dir);     # base directory for web server
 use vars qw($FWA_icondir); # icon base directory
@@ -174,6 +175,25 @@ FHEMWEBAPP_Initialize($)
   $data{webCmdFn}{noArg}      = "FWA_noArgFn";
   $data{webCmdFn}{textField}  = "FWA_textFieldFn";
   $data{webCmdFn}{"~dropdown"}= "FWA_dropdownFn"; # Should be the last
+}
+
+sub 
+FWA_render($$)
+{
+  my($tpl, $data) = @_;
+  my $ret = "";
+  eval{
+    $ret = $FWA_xslate->render($tpl, $data) 
+  };
+  if($@)
+  {
+    my $msg = $@;
+    eval{
+      $ret = $FWA_xslate->render("error.tx", {error => "Error rendering template: $msg"});
+    };
+    return $@ if $@;
+  }
+  return $ret;
 }
 
 #####################################
@@ -636,7 +656,7 @@ FWA_answerCall($)
     $motd =~ s/\n/<br>/g;
     $content = $motd;
   }
-  my $html = $FWA_xslate->render("index.tx", {
+  my $html = FWA_render("index.tx", {
       title => $t,
       favicon => FWA_IconURL("favicon"),
       refresh => $rf,
@@ -938,7 +958,7 @@ FWA_makeTableFromArray($$@) {
       $row++;
     }
 
-    return $FWA_xslate->render("array_table.tx", {
+    return FWA_render("array_table.tx", {
       txt => $txt,
       class => $class,
       rows => $rows,
@@ -1153,7 +1173,7 @@ FWA_roomDetail()
     push(@atEnds, $html);
   }
 
-  return $FWA_xslate->render("room.tx", {
+  return FWA_render("room.tx", {
     groupedDevices => \%groupedDevices,
     atEnds => \@atEnds,
     rf => $rf,
@@ -1292,7 +1312,7 @@ sub
 FWA_hidden($$)
 {
   my ($name, $value) = @_;
-  return $FWA_xslate->render("input_hidden.tx", { name => $name, value => $value }); #<input type=\"hidden\" name=\"$n\" value=\"$v\"/>";
+  return FWA_render("input_hidden.tx", { name => $name, value => $value }); #<input type=\"hidden\" name=\"$n\" value=\"$v\"/>";
 }
 
 ##################
@@ -1419,7 +1439,7 @@ FWA_style($$)
       baseuri => "$FWA_ME$FWA_subdir",
     };
 
-    return $FWA_xslate->render("style_list.tx", $data);
+    return FWA_render("style_list.tx", $data);
 
   } elsif($a[1] eq "select") {
     my @fl = grep { $_ !~ m/(floorplan|dashboard)/ } FWA_fileList("$FWA_appdir/.*style.css");
@@ -1450,17 +1470,18 @@ FWA_style($$)
     my $filePath = FWA_fileNameToPath($fileName);
     my $error = "";
     if(!open(FH, $filePath)) {
-      return $FWA_xslate->render("error.tx", { error => "$filePath: $!"});
+      return FWA_render("error.tx", { error => "$filePath: $!"});
     }
     my $data = join("", <FH>);
     close(FH);
 
     $data =~ s/&/&amp;/g;
     
-    return $FWA_xslate->render("style_edit.tx", {
+    return FWA_render("style_edit.tx", {
       file => $fileName,
       text => $data,
       formmethod => $FWA_formmethod,
+      msg => $msg,
     });
   } elsif($a[1] eq "save") {
     my $fileName = $a[2];
@@ -1470,7 +1491,7 @@ FWA_style($$)
     my $filePath = FWA_fileNameToPath($fileName);
 
     if(!open(FH, ">$filePath")) {
-      return $FWA_xslate->render("error.tx", { error => "$filePath: $!"});
+      return FWA_render("error.tx", { error => "$filePath: $!"});
     }
     $FWA_data =~ s/\r//g if($^O !~ m/Win/);
     binmode (FH);
@@ -1480,7 +1501,7 @@ FWA_style($$)
     my $ret = FWA_fC("rereadcfg") if($filePath eq $attr{global}{configfile});
     $ret = FWA_fC("reload $fileName") if($fileName =~ m,\.pm$,);
     $ret = ($ret ? "$ret" : "Saved the file $fileName");
-    return FWA_style("style list", $ret);
+    return FWA_style("style edit $fileName", $ret);
 
   } elsif($a[1] eq "iconFor") {
     FWA_iconTable("iconFor", "icon", "style setIF $a[2] %s", undef);
@@ -1861,7 +1882,7 @@ FWA_makeEdit($$$)
   # my $cmd = "modify";
   # my $ncols = $FWA_ss ? 30 : 60;
 
-  # my $html = $FWA_xslate->render("edit.tx", {
+  # my $html = FWA_render("edit.tx", {
     # n => $n,
     # eval => mark_raw($eval),
     # formmethod => $FWA_formmethod,

@@ -1,0 +1,4 @@
+<input type="submit" name="<: $submit_name :>" value="<: $submit_value :>"
+: if $submit_class{
+	class="<: $submit_class:>"/>
+:}

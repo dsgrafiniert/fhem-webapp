@@ -47,7 +47,7 @@ sub FWA_updateHashes();
 
 use vars qw($FWA_dir);     # base directory for web server
 use vars qw($FWA_icondir); # icon base directory
-use vars qw($FWA_cssdir);  # css directory
+use vars qw($FWA_appdir);  # css directory
 use vars qw($FWA_gplotdir);# gplot directory
 use vars qw($MW_dir);     # moddir (./FHEM), needed by edit Files in new
                           # structure
@@ -160,14 +160,14 @@ FHEMWEBAPP_Initialize($)
 
   $FWA_dir      = "$attr{global}{modpath}/www";
   $FWA_icondir  = "$FWA_dir/images";
-  $FWA_cssdir   = "$FWA_dir/pgm2";
+  $FWA_appdir   = "$FWA_dir/app";
   $FWA_gplotdir = "$FWA_dir/gplot";
-  if(opendir(DH, "$FWA_dir/pgm2")) {
+  if(opendir(DH, "$FWA_appdir")) {
     @FWA_fhemwebjs = sort grep /^fhemweb.*js$/, readdir(DH);
     closedir(DH);
   }
 
-  $FWA_xslate=Text::Xslate->new( path => ["$FWA_dir/tpl"] );
+  $FWA_xslate=Text::Xslate->new( path => ["$FWA_appdir/tpl"] );
 
   $data{webCmdFn}{slider}     = "FWA_sliderFn";
   $data{webCmdFn}{timepicker} = "FWA_timepickerFn";
@@ -447,7 +447,7 @@ FWA_answerCall($)
       $file = $1; $ext = $2;
     }
     my $ldir = "$FWA_dir/$dir";
-    $ldir = "$FWA_dir/pgm2" if($dir eq "css" || $dir eq "js"); # FLOORPLAN compat
+    $ldir = "$FWA_appdir" if($dir eq "css" || $dir eq "js"); # FLOORPLAN compat
     $ldir = "$attr{global}{modpath}/docs" if($dir eq "docs");
 
     if(-r "$ldir/$file.$ext") {                # no return for FLOORPLAN
@@ -1375,7 +1375,7 @@ FWA_fileNameToPath($)
   if($name eq $cfgFileName) {
     return $attr{global}{configfile};
   } elsif($name =~ m/.*(css|svg)$/) {
-    return "$FWA_cssdir/$name";
+    return "$FWA_appdir/$name";
   } elsif($name =~ m/.*gplot$/) {
     return "$FWA_gplotdir/$name";
   } else {
@@ -1405,13 +1405,13 @@ FWA_style($$)
         FWA_fileList("$MW_dir/^(.*sh|[0-9][0-9].*Util.*pm|.*cfg|.*holiday".
                                   "|.*layout)\$"));
     FWA_displayFileList("styles",
-        FWA_fileList("$FWA_cssdir/^.*(css|svg)\$"));
+        FWA_fileList("$FWA_appdir/^.*(css|svg)\$"));
     FWA_displayFileList("gplot files",
         FWA_fileList("$FWA_gplotdir/^.*gplot\$"));
     FWA_pO $end;
 
   } elsif($a[1] eq "select") {
-    my @fl = grep { $_ !~ m/(floorplan|dashboard)/ } FWA_fileList("$FWA_cssdir/.*style.css");
+    my @fl = grep { $_ !~ m/(floorplan|dashboard)/ } FWA_fileList("$FWA_appdir/.*style.css");
     FWA_pO "$start<table class=\"block fileList\">";
     my $row = 0;
     foreach my $file (@fl) {
@@ -1612,10 +1612,10 @@ FWA_makeImage(@)
   $class =~ s/\./_/g;
   $class =~ s/@/ /g;
 
-  my $p = FW_iconPath($name);
+  my $p = FWA_iconPath($name);
   return $name if(!$p);
   if($p =~ m/\.svg$/i) {
-    if(open(FH, "$FW_icondir/$p")) {
+    if(open(FH, "$FWA_icondir/$p")) {
       <FH>; <FH>; <FH>; # Skip the first 3 lines;
       my $data = join("", <FH>);
       close(FH);
@@ -1639,7 +1639,7 @@ FWA_makeImage(@)
     }
   } else {
     $class = "class='$class'" if($class);
-    return "<img $class src=\"$FW_ME/images/$p\" alt=\"$txt\" title=\"$txt\">";
+    return "<img $class src=\"$FWA_ME/images/$p\" alt=\"$txt\" title=\"$txt\">";
   }
 }
 
@@ -2068,7 +2068,7 @@ FWA_Get($@)
   } elsif($arg eq "pathlist") {
     return "web server root:      $FWA_dir\n".
            "icon directory:       $FWA_icondir\n".
-           "css directory:        $FWA_cssdir\n".
+           "css directory:        $FWA_appdir\n".
            "gplot directory:      $FWA_gplotdir";
 
   } else {

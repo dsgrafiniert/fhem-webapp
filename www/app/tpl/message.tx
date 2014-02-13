@@ -1,0 +1,6 @@
+: if $msg {
+	<div class="alert alert-warning">
+		<button class="close" aria-hidden="true" data-dismiss="alert" type="button">&times;</button>
+		<: $msg :>
+	</div>
+: }

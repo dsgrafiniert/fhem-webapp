@@ -1,3 +1,4 @@
+: include "message.tx" { msg => $msg }
 	<form class="form-inline" role="form" method="<:$formmethod:>">
 		<div class="pull-left">
 			<input class="form-control btn btn-sm btn-primary" type="submit" name="save" value="Save <: $file :>" /><br />

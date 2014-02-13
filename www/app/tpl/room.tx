@@ -13,8 +13,10 @@
 					    <div class="panel-body">
 						    <div class="btn btn-primary disabled col-md-2"><: $device.state :></div>
                             <div class="col-md-10 pull-right align-right">
-:for $device.htmlCmdList -> $htmlCmd {
-    <: $htmlCmd :>
+:for $device.htmlCmdList.reverse() -> $htmlCmd {
+								<div class="col-md-6 pull-right">
+									<: $htmlCmd :>
+								</div>
 : }
                             </div>
 					    </div>

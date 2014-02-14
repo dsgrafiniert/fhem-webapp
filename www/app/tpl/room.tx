@@ -30,13 +30,18 @@
 : }
 			</div>
 : }
-            <div class="row">
-: for $atEnds.reverse() -> $html {
-
-			    <div class="col-md-12">
-					<: $html :>
-				</div>
+: if $atEnds.size() {
+		<div class="row">
+			<div class="col-md-12">
+				<div class="panel panel-default center">
+					<div class="panel-body">
+: for $atEnds -> $html {
+						<: $html :>
 : }
+					</div>
+				</div>
 			</div>
+		</div>
+: }
 	</div>
   </div>

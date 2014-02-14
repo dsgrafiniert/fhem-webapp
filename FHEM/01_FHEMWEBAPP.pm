@@ -1165,6 +1165,7 @@ FWA_roomDetail()
   }
 
   # Now the "atEnds"
+  my @ends;
   foreach my $d (sort { lc(AttrVal($a, "sortby", AttrVal($a,"alias",$a))) cmp
                         lc(AttrVal($b, "sortby", AttrVal($b,"alias",$b))) }
                    @atEnds) {
@@ -1172,14 +1173,15 @@ FWA_roomDetail()
     my $html = &{$modules{$defs{$d}{TYPE}}{FW_summaryFn}}($FW_wname, $d, 
                                                         $FW_room, \%extPage);
     use strict "refs";
+    
     if(defined($html)){
-      push(@atEnds, mark_raw($html));
+      push(@ends, mark_raw($html));
     }
   }
 
   return FWA_render("room.tx", {
     groupedDevices => \%groupedDevices,
-    atEnds => \@atEnds,
+    atEnds => \@ends,
     rf => $rf,
     roomname => $FW_room,
   });

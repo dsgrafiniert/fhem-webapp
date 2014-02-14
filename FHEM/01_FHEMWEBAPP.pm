@@ -35,7 +35,7 @@ sub FWA_readIcons($);
 sub FWA_readIconsFrom($$);
 sub FWA_returnFileAsStream($$$$$);
 sub FWA_roomStatesForInform($);
-sub FWA_menuList($);
+sub FWA_MenuList($);
 sub FWA_select($$$$$@);
 sub FWA_serveSpecial($$$$);
 sub FWA_roomDetail();
@@ -46,37 +46,38 @@ sub FWA_textfieldv($$$$);
 sub FWA_updateHashes();
 sub FWA_render($$);
 
-use vars qw($FWA_dir);     # base directory for web server
-use vars qw($FWA_icondir); # icon base directory
+use vars qw($FW_dir);     # base directory for web server
+use vars qw($FW_icondir); # icon base directory
 use vars qw($FWA_appdir);  # css directory
-use vars qw($FWA_gplotdir);# gplot directory
+use vars qw($FW_gplotdir);# gplot directory
 use vars qw($MWA_dir);     # moddir (./FHEM), needed by edit Files in new
                           # structure
 
-use vars qw($FWA_ME);      # webname (default is fhem), used by 97_GROUP/weblink
-use vars qw($FWA_ss);      # is smallscreen, needed by 97_GROUP/95_VIEW
-use vars qw($FWA_tp);      # is touchpad (iPad / etc)
-use vars qw($FWA_sp);      # stylesheetPrefix
+use vars qw($FW_ME);      # webname (default is fhem), used by 97_GROUP/weblink
+use vars qw($FW_ss);      # is smallscreen, needed by 97_GROUP/95_VIEW
+use vars qw($FW_tp);      # is touchpad (iPad / etc)
+use vars qw($FW_sp);      # stylesheetPrefix
 
 # global variables, also used by 97_GROUP/95_VIEW/95_FLOORPLAN
-use vars qw(%FWA_types);   # device types,
+use vars qw(%FW_types);   # device types,
 use vars qw($FWA_RET);     # Returned data (html)
-use vars qw($FWA_RETTYPE); # image/png or the like
-use vars qw($FWA_wname);   # Web instance
-use vars qw($FWA_subdir);  # Sub-path in URL, used by FLOORPLAN/weblink
-use vars qw(%FWA_pos);     # scroll position
-use vars qw($FWA_cname);   # Current connection name
-use vars qw(%FWA_hiddenroom); # hash of hidden rooms, used by weblink
-use vars qw($FWA_plotmode);# Global plot mode (WEB attribute), used by SVG
-use vars qw($FWA_plotsize);# Global plot size (WEB attribute), used by SVG
-use vars qw(%FWA_webArgs); # all arguments specified in the GET
+use vars qw($FW_RET);     # Returned data (html)
+use vars qw($FW_RETTYPE); # image/png or the like
+use vars qw($FW_wname);   # Web instance
+use vars qw($FW_subdir);  # Sub-path in URL, used by FLOORPLAN/weblink
+use vars qw(%FW_pos);     # scroll position
+use vars qw($FW_cname);   # Current connection name
+use vars qw(%FW_hiddenroom); # hash of hidden rooms, used by weblink
+use vars qw($FW_plotmode);# Global plot mode (WEB attribute), used by SVG
+use vars qw($FW_plotsize);# Global plot size (WEB attribute), used by SVG
+use vars qw(%FW_webArgs); # all arguments specified in the GET
 use vars qw(@FWA_fhemwebjs);# List of fhemweb*js scripts to load
-use vars qw($FWA_detail);   # currently selected device for detail view
-use vars qw($FWA_cmdret);   # Returned data by the fhem call
-use vars qw($FWA_room);      # currently selected room
-use vars qw($FWA_formmethod);
+use vars qw($FW_detail);   # currently selected device for detail view
+use vars qw($FW_cmdret);   # Returned data by the fhem call
+use vars qw($FW_room);      # currently selected room
+use vars qw($FW_formmethod);
 
-$FWA_formmethod = "post";
+$FW_formmethod = "post";
 
 my $FWA_zlib_checked;
 my $FWA_use_zlib = 1;
@@ -89,10 +90,10 @@ my @FWA_httpheader; # HTTP header, line by line
 my @FWA_enc;        # Accepted encodings (browser header)
 my $FWA_data;       # Filecontent from browser when editing a file
 my %FWA_icons;      # List of icons
-my @FWA_iconDirs;   # Directory search order for icons
-my $FWA_RETTYPE;    # image/png or the like
-my %FWA_rooms;      # hash of all rooms
-my %FWA_types;      # device types, for sorting
+my @FW_icondirs;   # Directory search order for icons
+my $FW_RETTYPE;    # image/png or the like
+my %FW_rooms;      # hash of all rooms
+my %FW_types;      # device types, for sorting
 my %FWA_hiddengroup;# hash of hidden groups
 my $FWA_inform;
 my $FWA_XHR;        # Data only answer, no HTML
@@ -159,10 +160,10 @@ FHEMWEBAPP_Initialize($)
                                 "sortby", "devStateStyle");
   InternalTimer(time()+60, "FWA_closeOldClients", 0, 0);
   
-  $FWA_dir      = "$attr{global}{modpath}/www";
-  $FWA_icondir  = "$FWA_dir/images";
-  $FWA_appdir   = "$FWA_dir/app";
-  $FWA_gplotdir = "$FWA_dir/gplot";
+  $FW_dir      = "$attr{global}{modpath}/www";
+  $FW_icondir  = "$FW_dir/images";
+  $FWA_appdir   = "$FW_dir/app";
+  $FW_gplotdir = "$FW_dir/gplot";
   if(opendir(DH, "$FWA_appdir/js")) {
     @FWA_fhemwebjs = sort grep /^fhemweb.*js$/, readdir(DH);
     closedir(DH);
@@ -170,11 +171,11 @@ FHEMWEBAPP_Initialize($)
 
   $FWA_xslate=Text::Xslate->new( path => ["$FWA_appdir/tpl"] );
 
-  $data{webCmdFn}{slider}     = "FWA_sliderFn";
-  $data{webCmdFn}{timepicker} = "FWA_timepickerFn";
-  $data{webCmdFn}{noArg}      = "FWA_noArgFn";
-  $data{webCmdFn}{textField}  = "FWA_textFieldFn";
-  $data{webCmdFn}{"~dropdown"}= "FWA_dropdownFn"; # Should be the last
+  $data{webCmdAppFn}{slider}     = "FWA_sliderFn";
+  $data{webCmdAppFn}{timepicker} = "FWA_timepickerFn";
+  $data{webCmdAppFn}{noArg}      = "FWA_noArgFn";
+  $data{webCmdAppFn}{textField}  = "FWA_textFieldFn";
+  $data{webCmdAppFn}{"~dropdown"}= "FWA_dropdownFn"; # Should be the last
 }
 
 sub 
@@ -260,22 +261,22 @@ FWA_Read($)
   }
 
   $FWA_chash = $hash;
-  $FWA_wname = $hash->{SNAME};
-  $FWA_cname = $name;
-  $FWA_subdir = "";
+  $FW_wname = $hash->{SNAME};
+  $FW_cname = $name;
+  $FW_subdir = "";
 
   my $c = $hash->{CD};
   if(!$FWA_zlib_checked) {
     $FWA_zlib_checked = 1;
-    $FWA_use_zlib = AttrVal($FWA_wname, "fwcompress", 1);
+    $FWA_use_zlib = AttrVal($FW_wname, "fwcompress", 1);
     if($FWA_use_zlib) {
       eval { require Compress::Zlib; };
       if($@) {
         $FWA_use_zlib = 0;
-        Log3 $FWA_wname, 1, $@;
-        Log3 $FWA_wname, 1,
-               "$FWA_wname: Can't load Compress::Zlib, deactivating compression";
-        $attr{$FWA_wname}{fwcompress} = 0;
+        Log3 $FW_wname, 1, $@;
+        Log3 $FW_wname, 1,
+               "$FW_wname: Can't load Compress::Zlib, deactivating compression";
+        $attr{$FW_wname}{fwcompress} = 0;
       }
     }
   }
@@ -288,12 +289,12 @@ FWA_Read($)
 
   if(!defined($ret) || $ret <= 0) {
     CommandDelete(undef, $name);
-    Log3 $FWA_wname, 4, "Connection closed for $name";
+    Log3 $FW_wname, 4, "Connection closed for $name";
     return;
   }
 
   $hash->{BUF} .= $buf;
-  if($defs{$FWA_wname}{SSL}) {
+  if($defs{$FW_wname}{SSL}) {
     while($c->pending()) {
       sysread($c, $buf, 1024);
       $hash->{BUF} .= $buf;
@@ -315,7 +316,7 @@ FWA_Read($)
   delete($hash->{HDR});
 
   my @origin = grep /Origin/, @FWA_httpheader;
-  $FWA_headercors = (AttrVal($FWA_wname, "CORS", 0) ?
+  $FWA_headercors = (AttrVal($FW_wname, "CORS", 0) ?
               "Access-Control-Allow-".$origin[0]."\r\n".
               "Access-Control-Allow-Methods: GET OPTIONS\r\n".
               "Access-Control-Allow-Headers: Origin, Authorization, Accept\r\n".
@@ -325,7 +326,7 @@ FWA_Read($)
 
   #############################
   # BASIC HTTP AUTH
-  my $basicAuth = AttrVal($FWA_wname, "basicAuth", undef);
+  my $basicAuth = AttrVal($FW_wname, "basicAuth", undef);
   my @headerOptions = grep /OPTIONS/, @FWA_httpheader;
   if($basicAuth) {
     my @authLine = grep /Authorization: Basic/, @FWA_httpheader;
@@ -335,12 +336,12 @@ FWA_Read($)
     if($secret && $basicAuth =~ m/^{.*}$/ || $headerOptions[0]) {
       eval "use MIME::Base64";
       if($@) {
-        Log3 $FWA_wname, 1, $@;
+        Log3 $FW_wname, 1, $@;
 
       } else {
         my ($user, $password) = split(":", decode_base64($secret));
         $pwok = eval $basicAuth;
-        Log3 $FWA_wname, 1, "basicAuth expression: $@" if($@);
+        Log3 $FW_wname, 1, "basicAuth expression: $@" if($@);
       }
     }
     if($headerOptions[0]) {
@@ -353,7 +354,7 @@ FWA_Read($)
       exit(1);
     };
     if(!$pwok) {
-      my $msg = AttrVal($FWA_wname, "basicAuthMsg", "Fhem: login required");
+      my $msg = AttrVal($FW_wname, "basicAuthMsg", "Fhem: login required");
       print $c "HTTP/1.1 401 Authorization Required\r\n",
              "WWW-Authenticate: Basic realm=\"$msg\"\r\n",
              $FWA_headercors,
@@ -374,9 +375,9 @@ FWA_Read($)
   $hash->{LASTACCESS} = $now;
 
   $arg = "" if(!defined($arg));
-  Log3 $FWA_wname, 4, "HTTP $name GET $arg";
+  Log3 $FW_wname, 4, "HTTP $name GET $arg";
   my $pid;
-  if(AttrVal($FWA_wname, "plotfork", undef)) {
+  if(AttrVal($FW_wname, "plotfork", undef)) {
     # Process SVG rendering as a parallel process
     return if(($arg =~ m+/SVG_showLog+) && ($pid = fork));
   }
@@ -385,9 +386,9 @@ FWA_Read($)
   return if($cacheable == -1); # Longpoll / inform request;
 
   my $compressed = "";
-  # if(($FWA_RETTYPE =~ m/text/i ||
-      # $FWA_RETTYPE =~ m/svg/i ||
-      # $FWA_RETTYPE =~ m/script/i) &&
+  # if(($FW_RETTYPE =~ m/text/i ||
+      # $FW_RETTYPE =~ m/svg/i ||
+      # $FW_RETTYPE =~ m/script/i) &&
      # (int(@FWA_enc) == 1 && $FWA_enc[0] =~ m/gzip/) &&
      # $FWA_use_zlib) {
     # $FWA_RET = Compress::Zlib::memGzip($FWA_RET);
@@ -397,11 +398,11 @@ FWA_Read($)
   my $length = length($FWA_RET);
   my $expires = ($cacheable?
                         ("Expires: ".localtime($now+900)." GMT\r\n") : "");
-  Log3 $FWA_wname, 4, "$arg / RL:$length / $FWA_RETTYPE / $compressed / $expires";
+  Log3 $FW_wname, 4, "$arg / RL:$length / $FW_RETTYPE / $compressed / $expires";
   print $c "HTTP/1.1 200 OK\r\n",
            "Content-Length: $length\r\n",
            $expires, $compressed, $FWA_headercors,
-           "Content-Type: $FWA_RETTYPE\r\n\r\n",
+           "Content-Type: $FW_RETTYPE\r\n\r\n",
            $FWA_RET;
   exit if(defined($pid));
 }
@@ -413,36 +414,36 @@ FWA_serveSpecial($$$$)
   my ($file,$ext,$dir,$cacheable)= @_;
   $file =~ s,\.\./,,g; # little bit of security
 
-  $file = "$FWA_sp$file" if($ext eq "css" && -f "$dir/$FWA_sp$file.$ext");
-  $FWA_RETTYPE = ext2MIMEType($ext);
+  $file = "$FW_sp$file" if($ext eq "css" && -f "$dir/$FW_sp$file.$ext");
+  $FW_RETTYPE = ext2MIMEType($ext);
   return FWA_returnFileAsStream("$dir/$file.$ext", "",
-                                        $FWA_RETTYPE, 0, $cacheable);
+                                        $FW_RETTYPE, 0, $cacheable);
 }
 
 sub
 FWA_answerCall($)
 {
   my ($arg) = @_;
-  my $me=$defs{$FWA_cname};      # cache, else rereadcfg will delete us
+  my $me=$defs{$FW_cname};      # cache, else rereadcfg will delete us
 
-  $FWA_RET = "";
-  $FWA_RETTYPE = "text/html; charset=$FWA_encoding";
-  $FWA_ME = "/" . AttrVal($FWA_wname, "webname", "fhem");
+  $FWA_RET = $FW_RET = "";
+  $FW_RETTYPE = "text/html; charset=$FWA_encoding";
+  $FW_ME = "/" . AttrVal($FW_wname, "webname", "fhem");
 
   $MWA_dir = "$attr{global}{modpath}/FHEM";
-  $FWA_sp = AttrVal($FWA_wname, "stylesheetPrefix", "");
-  $FWA_ss = ($FWA_sp =~ m/smallscreen/);
-  $FWA_tp = ($FWA_sp =~ m/smallscreen|touchpad/);
-  @FWA_iconDirs = grep { $_ } split(":", AttrVal($FWA_wname, "iconPath",
-                                "$FWA_sp:default:fhemSVG:openautomation"));
-  if($arg =~ m,$FWA_ME/floorplan/([a-z0-9.:_]+),i) { # FLOORPLAN: special icondir
-    unshift @FWA_iconDirs, $1;
+  $FW_sp = AttrVal($FW_wname, "stylesheetPrefix", "");
+  $FW_ss = ($FW_sp =~ m/smallscreen/);
+  $FW_tp = ($FW_sp =~ m/smallscreen|touchpad/);
+  @FW_icondirs = grep { $_ } split(":", AttrVal($FW_wname, "iconPath",
+                                "$FW_sp:default:fhemSVG:openautomation"));
+  if($arg =~ m,$FW_ME/floorplan/([a-z0-9.:_]+),i) { # FLOORPLAN: special icondir
+    unshift @FW_icondirs, $1;
     FWA_readIcons($1);
   }
 
   # /icons/... => current state of ...
   # also used for static images: unintended, but too late to change
-  if($arg =~ m,^$FWA_ME/icons/(.*)$,) {
+  if($arg =~ m,^$FW_ME/icons/(.*)$,) {
     my ($icon,$cacheable) = (urlDecode($1), 1);
     my $iconPath = FWA_iconPath($icon);
 
@@ -454,9 +455,9 @@ FWA_answerCall($)
       $iconPath = FWA_iconPath($icon);
     }
     $iconPath =~ m/(.*)\.([^.]*)/;
-    return FWA_serveSpecial($1, $2, $FWA_icondir, $cacheable);
+    return FWA_serveSpecial($1, $2, $FW_icondir, $cacheable);
 
-  } elsif($arg =~ m,^$FWA_ME/(.*)/([^/]*)$,) {          # the "normal" case
+  } elsif($arg =~ m,^$FW_ME/(.*)/([^/]*)$,) {          # the "normal" case
     my ($dir, $ofile, $ext) = ($1, $2, "");
     $dir =~ s/\.\.//g;
     $dir =~ s,www/,,g; # Want commandref.html to work from file://...
@@ -466,7 +467,7 @@ FWA_answerCall($)
     if($file =~ m/^(.*)\.([^.]*)$/) {
       $file = $1; $ext = $2;
     }
-    my $ldir = "$FWA_dir/$dir";
+    my $ldir = "$FW_dir/$dir";
     $ldir = "$FWA_appdir" if($dir eq "css" || $dir eq "js"); # FLOORPLAN compat
     $ldir = "$attr{global}{modpath}/docs" if($dir eq "docs");
 
@@ -475,23 +476,23 @@ FWA_answerCall($)
     }
     $arg = "/$dir/$ofile";
 
-  } elsif($arg =~ m/^$FWA_ME(.*)/) {
-    $arg = $1; # The stuff behind FWA_ME, continue to check for commands/FWEXT
+  } elsif($arg =~ m/^$FW_ME(.*)/) {
+    $arg = $1; # The stuff behind FW_ME, continue to check for commands/FWEXT
 
   } else {
     my $c = $me->{CD};
-    Log3 $FWA_wname, 4, "$FWA_wname: redirecting $arg to $FWA_ME";
+    Log3 $FW_wname, 4, "$FW_wname: redirecting $arg to $FW_ME";
     print $c "HTTP/1.1 302 Found\r\n",
              "Content-Length: 0\r\n", $FWA_headercors,
-             "Location: $FWA_ME\r\n\r\n";
+             "Location: $FW_ME\r\n\r\n";
     return -1;
 
   }
 
 
-  $FWA_plotmode = AttrVal($FWA_wname, "plotmode", "SVG");
-  $FWA_plotsize = AttrVal($FWA_wname, "plotsize", $FWA_ss ? "480,160" :
-                                                $FWA_tp ? "640,160" : "800,160");
+  $FW_plotmode = AttrVal($FW_wname, "plotmode", "SVG");
+  $FW_plotsize = AttrVal($FW_wname, "plotsize", $FW_ss ? "480,160" :
+                                                $FW_tp ? "640,160" : "800,160");
   my ($cmd, $cmddev) = FWA_digestCgi($arg);
 
 
@@ -503,8 +504,8 @@ FWA_answerCall($)
       }
 
     } else {                     # Compatibility mode
-      $me->{inform}{type}   = ($FWA_room ? "status" : "raw");
-      $me->{inform}{filter} = ($FWA_room ? $FWA_room : ".*");
+      $me->{inform}{type}   = ($FW_room ? "status" : "raw");
+      $me->{inform}{filter} = ($FW_room ? $FW_room : ".*");
     }
     my $filter = $me->{inform}{filter};
     $filter = "NAME=.*" if($filter eq "room=all");
@@ -514,7 +515,7 @@ FWA_answerCall($)
     $me->{inform}{devices} = \%h;
 
     # NTFY_ORDER is larger than the normal order (50-)
-    $me->{NTFY_ORDER} = $FWA_cname;   # else notifyfn won't be called
+    $me->{NTFY_ORDER} = $FW_cname;   # else notifyfn won't be called
     %ntfyHash = ();
 
     my $c = $me->{CD};
@@ -533,15 +534,15 @@ FWA_answerCall($)
 
   #If we are in XHR or json mode, execute the command directly
   if($FWA_XHR || $FWA_jsonp) {
-    $FWA_cmdret = $docmd ? FWA_fC($cmd, $cmddev) : "";
-    $FWA_RETTYPE = "text/plain; charset=$FWA_encoding";
+    $FW_cmdret = $docmd ? FWA_fC($cmd, $cmddev) : "";
+    $FW_RETTYPE = "text/plain; charset=$FWA_encoding";
     if($FWA_jsonp) {
-      $FWA_cmdret =~ s/'/\\'/g;
+      $FW_cmdret =~ s/'/\\'/g;
       # Escape newlines in JavaScript string
-      $FWA_cmdret =~ s/\n/\\\n/g;
-      FWA_pO "$FWA_jsonp('$FWA_cmdret');";
+      $FW_cmdret =~ s/\n/\\\n/g;
+      FWA_pO "$FWA_jsonp('$FW_cmdret');";
     } else {
-      FWA_pO $FWA_cmdret;
+      FWA_pO $FW_cmdret;
     }
     return 0;
   }
@@ -555,29 +556,29 @@ FWA_answerCall($)
       next if($arg !~ m/^$k/);
       $FWA_contentFunc = $h->{CONTENTFUNC};
       next if($h !~ m/HASH/ || !$h->{FUNC});
-      #Returns undef as FWA_RETTYPE if it already sent a HTTP header
+      #Returns undef as FW_RETTYPE if it already sent a HTTP header
       no strict "refs";
-      ($FWA_RETTYPE, $FWA_RET) = &{$h->{FUNC}}($arg);
+      ($FW_RETTYPE, $FWA_RET) = &{$h->{FUNC}}($arg);
       use strict "refs";
-      return defined($FWA_RETTYPE) ? 0 : -1;
+      return defined($FW_RETTYPE) ? 0 : -1;
     }
   }
 
 
   #Now execute the command
-  $FWA_cmdret = "";
+  $FW_cmdret = "";
   if($docmd) {
-    $FWA_cmdret = FWA_fC($cmd, $cmddev);
+    $FW_cmdret = FWA_fC($cmd, $cmddev);
     if($cmd =~ m/^define +([^ ]+) /) { # "redirect" after define to details
-      $FWA_detail = $1;
+      $FW_detail = $1;
     }
   }
 
   # Redirect after a command, to clean the browser URL window
-  if($docmd && !$FWA_cmdret && AttrVal($FWA_wname, "redirectCmds", 1)) {
-    my $tgt = $FWA_ME;
-       if($FWA_detail) { $tgt .= "?detail=$FWA_detail" }
-    elsif($FWA_room)   { $tgt .= "?room=$FWA_room" }
+  if($docmd && !$FW_cmdret && AttrVal($FW_wname, "redirectCmds", 1)) {
+    my $tgt = $FW_ME;
+       if($FW_detail) { $tgt .= "?detail=$FW_detail" }
+    elsif($FW_room)   { $tgt .= "?room=$FW_room" }
     my $c = $me->{CD};
     print $c "HTTP/1.1 302 Found\r\n",
              "Content-Length: 0\r\n", $FWA_headercors,
@@ -592,8 +593,8 @@ FWA_answerCall($)
   
   # meta refresh in rooms only
   my $rf = "";
-  if ($FWA_room) {
-    $rf = AttrVal($FWA_wname, "refresh", "");
+  if ($FW_room) {
+    $rf = AttrVal($FW_wname, "refresh", "");
   }
 
   my @scripts = ();
@@ -604,39 +605,39 @@ FWA_answerCall($)
       my $item = $data{FWEXT}{$k};
       next if(!$item->{SCRIPT});
       my $script = $item->{SCRIPT};
-      $script = ($script =~ m,^/,) ? "$FWA_ME$script" : "$FWA_ME/pgm2/$script";
+      $script = ($script =~ m,^/,) ? "$FW_ME$script" : "$FW_ME/pgm2/$script";
       push(@scripts, $script);
     }
   }
 
-  push(@scripts, "$FWA_ME/pgm2/svg.js") if($FWA_plotmode eq "SVG");
-  if($FWA_plotmode eq"jsSVG") {
-    push(@scripts, "$FWA_ME/pgm2/jsSVG.js");
+  push(@scripts, "$FW_ME/pgm2/svg.js") if($FW_plotmode eq "SVG");
+  if($FW_plotmode eq"jsSVG") {
+    push(@scripts, "$FW_ME/pgm2/jsSVG.js");
   }
   foreach my $js (@FWA_fhemwebjs) {
-    push(@scripts, "$FWA_ME/pgm2/$js");
+    push(@scripts, "$FW_ME/pgm2/$js");
   } 
 
-  my $onload = AttrVal($FWA_wname, "longpoll", 1) ?
+  my $onload = AttrVal($FW_wname, "longpoll", 1) ?
                       "onload=\"FWA_delayedStart()\"" : "";
 
   if($FWA_activateInform) {
-    $FWA_cmdret = $FWA_activateInform = "";
+    $FW_cmdret = $FWA_activateInform = "";
     $cmd = "style eventMonitor";
   }
 
   my $content = "";
   my $content_preformatted = 0;
-  if($FWA_cmdret) {
-    $FWA_detail = "";
-    $FWA_room = "";
-    $FWA_cmdret = FWA_htmlEscape($FWA_cmdret);
-    $FWA_cmdret =~ s/>/&gt;/g;
-    $content_preformatted = $FWA_cmdret =~ m/\n/;
-    $content = $FWA_cmdret;
+  if($FW_cmdret) {
+    $FW_detail = "";
+    $FW_room = "";
+    $FW_cmdret = FWA_htmlEscape($FW_cmdret);
+    $FW_cmdret =~ s/>/&gt;/g;
+    $content_preformatted = $FW_cmdret =~ m/\n/;
+    $content = $FW_cmdret;
   }
 
-  my $menus = FWA_menuList($cmd);
+  my $menus = FWA_MenuList($cmd);
   Log 3, $menus;
   if($FWA_contentFunc) {
     no strict "refs";
@@ -647,9 +648,9 @@ FWA_answerCall($)
   }
 
      if($cmd =~ m/^style /)     { $content = FWA_style($cmd,undef);     }
-  elsif($FWA_detail)            { $content = FWA_doDetail($FWA_detail); }
-  elsif($FWA_room)              { $content = FWA_roomDetail();            }
-  elsif(!$FWA_cmdret &&
+  elsif($FW_detail)            { $content = FWA_doDetail($FW_detail); }
+  elsif($FW_room)              { $content = FWA_roomDetail();            }
+  elsif(!$FW_cmdret &&
         !$FWA_contentFunc &&
         AttrVal("global", "motd", "none") ne "none") {
     my $motd = AttrVal("global","motd",undef);
@@ -660,15 +661,15 @@ FWA_answerCall($)
       title => $t,
       favicon => FWA_IconURL("favicon"),
       refresh => $rf,
-      stylesheet => "$FWA_ME/app/css/style.css",
+      stylesheet => "$FW_ME/app/css/style.css",
       scripts => \@scripts,
       onload => mark_raw($onload),
       menus => $menus,
-      current_room => $FWA_room,
+      current_room => $FW_room,
       content => mark_raw($content),
       is_content_preformatted => $content_preformatted,
-      is_smallscreen => $FWA_ss,
-      is_tablet => $FWA_tp,
+      is_smallscreen => $FW_ss,
+      is_tablet => $FW_tp,
     });
   FWA_pO $html;
   return 0;
@@ -684,34 +685,34 @@ FWA_digestCgi($)
   my (%arg, %val, %dev);
   my ($cmd, $c) = ("","","");
 
-  %FWA_pos = ();
-  $FWA_room = "";
-  $FWA_detail = "";
+  %FW_pos = ();
+  $FW_room = "";
+  $FW_detail = "";
   $FWA_XHR = undef;
   $FWA_jsonp = undef;
   $FWA_inform = undef;
 
-  %FWA_webArgs = ();
+  %FW_webArgs = ();
   #Remove (nongreedy) everything including the first '?'
   $arg =~ s,^.*?[?],,;
   foreach my $pv (split("&", $arg)) {
-    next if($pv eq ""); # happens when post forgot to set FWA_ME
+    next if($pv eq ""); # happens when post forgot to set FW_ME
     $pv =~ s/\+/ /g;
     $pv =~ s/%([\dA-F][\dA-F])/chr(hex($1))/ige;
     my ($p,$v) = split("=",$pv, 2);
 
     # Multiline: escape the NL for fhem
     $v =~ s/[\r]//g if($v && $p && $p ne "data");
-    $FWA_webArgs{$p} = $v;
+    $FW_webArgs{$p} = $v;
 
-    if($p eq "detail")       { $FWA_detail = $v; }
-    if($p eq "room")         { $FWA_room = $v; }
+    if($p eq "detail")       { $FW_detail = $v; }
+    if($p eq "room")         { $FW_room = $v; }
     if($p eq "cmd")          { $cmd = $v; }
     if($p =~ m/^arg\.(.*)$/) { $arg{$1} = $v; }
     if($p =~ m/^val\.(.*)$/) { $val{$1} = $v; }
     if($p =~ m/^dev\.(.*)$/) { $dev{$1} = $v; }
     if($p =~ m/^cmd\.(.*)$/) { $cmd = $v; $c = $1; }
-    if($p eq "pos")          { %FWA_pos =  split(/[=;]/, $v); }
+    if($p eq "pos")          { %FW_pos =  split(/[=;]/, $v); }
     if($p eq "data")         { $FWA_data = $v; }
     if($p eq "XHR")          { $FWA_XHR = 1; }
     if($p eq "jsonp")        { $FWA_jsonp = $v; }
@@ -726,31 +727,31 @@ FWA_digestCgi($)
 }
 
 #####################
-# create FWA_rooms && FWA_types
+# create FW_rooms && FW_types
 sub
 FWA_updateHashes()
 {
   #################
   # Make a room  hash
-  %FWA_rooms = ();
+  %FW_rooms = ();
   foreach my $d (keys %defs ) {
     next if(IsIgnored($d));
     foreach my $r (split(",", AttrVal($d, "room", "Unsorted"))) {
-      $FWA_rooms{$r}{$d} = 1;
+      $FW_rooms{$r}{$d} = 1;
     }
   }
 
   ###############
   # Needed for type sorting
-  %FWA_types = ();
+  %FW_types = ();
   foreach my $d (sort keys %defs ) {
     next if(IsIgnored($d));
     my $t = AttrVal($d, "subType", $defs{$d}{TYPE});
     $t = AttrVal($d, "model", $t) if($t && $t eq "unknown"); # RKO: ???
-    $FWA_types{$d} = $t;
+    $FW_types{$d} = $t;
   }
 
-  $FWA_room = AttrVal($FWA_detail, "room", "Unsorted") if($FWA_detail);
+  $FW_room = AttrVal($FW_detail, "room", "Unsorted") if($FW_detail);
 }
 
 ##############################
@@ -782,7 +783,7 @@ FWA_makeTable($$$@)
     FWA_pF "<tr class=\"%s\">", ($row&1)?"odd":"even";
     $row++;
 
-    if($n eq "DEF" && !$FWA_hiddenroom{input}) {
+    if($n eq "DEF" && !$FW_hiddenroom{input}) {
       FWA_makeEdit($name, $n, $val);
 
     } else {
@@ -797,7 +798,7 @@ FWA_makeTable($$$@)
       if(ref($val)) { #handle readings
         my ($v, $t) = ($val->{VAL}, $val->{TIME});
         $v = FWA_htmlEscape($v);
-        if($FWA_ss) {
+        if($FW_ss) {
           $t = ($t ? "<br><div class=\"tiny\">$t</div>" : "");
           FWA_pO "<td><div class=\"dval\">$v$t</div></td>";
         } else {
@@ -834,7 +835,7 @@ FWA_makeTable($$$@)
     }
 
     FWA_pH "cmd.$name=$cmd $name $n&amp;detail=$name", $cmd, 1
-        if($cmd && !$FWA_ss);
+        if($cmd && !$FW_ss);
     FWA_pO "</tr>";
   }
   FWA_pO "</table>";
@@ -848,7 +849,7 @@ sub
 FWA_makeSelect($$$$)
 {
   my ($d, $cmd, $list,$class) = @_;
-  return if(!$list || $FWA_hiddenroom{input});
+  return if(!$list || $FW_hiddenroom{input});
   my @al = sort map { s/:.*//;$_ } split(" ", $list);
 
   my $selEl = (defined($al[0]) ? $al[0] : " ");
@@ -856,8 +857,8 @@ FWA_makeSelect($$$$)
   $selEl = "room" if($list =~ m/room:/);
 
   FWA_pO "<div class='makeSelect'>";
-  FWA_pO "<form method=\"$FWA_formmethod\" ".
-                "action=\"$FWA_ME$FWA_subdir\" autocomplete=\"off\">";
+  FWA_pO "<form method=\"$FW_formmethod\" ".
+                "action=\"$FW_ME$FW_subdir\" autocomplete=\"off\">";
   FWA_pO FWA_hidden("detail", $d);
   FWA_pO FWA_hidden("dev.$cmd$d", $d);
   FWA_pO FWA_submit("cmd.$cmd$d", $cmd, $class);
@@ -882,7 +883,7 @@ FWA_doDetail($)
   $t = "MISSING" if(!defined($t));
   FWA_pO "<div id=\"content\">";
 
-  if($FWA_ss) { # FS20MS2 special: on and off, is not the same as toggle
+  if($FW_ss) { # FS20MS2 special: on and off, is not the same as toggle
     my $webCmd = AttrVal($d, "webCmd", undef);
     if($webCmd) {
       FWA_pO "<table class=\"webcmd\">";
@@ -896,14 +897,14 @@ FWA_doDetail($)
   }
   FWA_pO "<table><tr><td>";
 
-  if($modules{$t}{FWA_detailFn}) {
+  if($modules{$t}{FW_detailFn}) {
     no strict "refs";
-    my $txt = &{$modules{$t}{FWA_detailFn}}($FWA_wname, $d, $FWA_room);
+    my $txt = &{$modules{$t}{FW_detailFn}}($FW_wname, $d, $FW_room);
     FWA_pO "$txt<br>" if(defined($txt));
     use strict "refs";
   }
 
-  FWA_pO "<form method=\"$FWA_formmethod\" action=\"$FWA_ME\">";
+  FWA_pO "<form method=\"$FW_formmethod\" action=\"$FW_ME\">";
   FWA_pO FWA_hidden("detail", $d);
 
   FWA_makeSelect($d, "set", getAllSets($d), "set");
@@ -913,7 +914,7 @@ FWA_doDetail($)
   FWA_makeTable("Readings", $d, $h->{READINGS});
 
   my $attrList = getAllAttr($d);
-  my $roomList = join(",", sort grep !/ /, keys %FWA_rooms);
+  my $roomList = join(",", sort grep !/ /, keys %FW_rooms);
   $attrList =~ s/room /room:$roomList /;
   FWA_makeSelect($d, "attr", $attrList,"attr");
 
@@ -935,7 +936,7 @@ FWA_doDetail($)
 
   FWA_pH "cmd=style iconFor $d", "Select icon";
   FWA_pH "cmd=style showDSI $d", "Extend devStateIcon";
-  FWA_pH "$FWA_ME/docs/commandref.html#${t}", "Device specific help";
+  FWA_pH "$FW_ME/docs/commandref.html#${t}", "Device specific help";
   FWA_pO "<br><br>";
   FWA_pO "</div>";
 
@@ -967,7 +968,7 @@ FWA_makeTableFromArray($$@) {
 }
 
 sub
-FWA_roomIdx(\@$)
+FW_roomIdx(\@$)
 {
   my ($arr,$v) = @_; 
   my ($index) = grep { $v =~ /^$arr->[$_]$/ } 0..$#$arr;
@@ -985,13 +986,13 @@ FWA_roomIdx(\@$)
 ##############
 # Header, Zoom-Icons & list of rooms at the left.
 sub
-FWA_menuList($)
+FWA_MenuList($)
 {
   my ($cmd) = @_;
 
-  %FWA_hiddenroom = ();
-  foreach my $r (split(",",AttrVal($FWA_wname, "hiddenroom", ""))) {
-    $FWA_hiddenroom{$r} = 1;
+  %FW_hiddenroom = ();
+  foreach my $r (split(",",AttrVal($FW_wname, "hiddenroom", ""))) {
+    $FW_hiddenroom{$r} = 1;
   }
 
   ##############
@@ -1008,46 +1009,46 @@ FWA_menuList($)
     foreach my $k (sort keys %{$data{FWEXT}}) {
       my $h = $data{FWEXT}{$k};
       next if($h !~ m/HASH/ || !$h->{LINK} || !$h->{NAME});
-      next if($FWA_hiddenroom{$h->{NAME}});
+      next if($FW_hiddenroom{$h->{NAME}});
       push(@list_extensions, { 
         name => $h->{NAME}, 
-        link => $FWA_ME ."/".$h->{LINK} 
+        link => $FW_ME ."/".$h->{LINK} 
        });
       $cnt++;
     }
   }
-  $FWA_room = "" if(!$FWA_room);
+  $FW_room = "" if(!$FW_room);
 
-  my @sortBy = split( " ", AttrVal( $FWA_wname, "sortRooms", "" ) );
-  @sortBy = sort keys %FWA_rooms if( scalar @sortBy == 0 );
+  my @sortBy = split( " ", AttrVal( $FW_wname, "sortRooms", "" ) );
+  @sortBy = sort keys %FW_rooms if( scalar @sortBy == 0 );
 
   ##########################
   # Rooms and other links
-  foreach my $r ( sort { FWA_roomIdx(@sortBy,$a) cmp
-                         FWA_roomIdx(@sortBy,$b) } keys %FWA_rooms ) {
-    next if($r eq "hidden" || $FWA_hiddenroom{$r});
+  foreach my $r ( sort { FW_roomIdx(@sortBy,$a) cmp
+                         FW_roomIdx(@sortBy,$b) } keys %FW_rooms ) {
+    next if($r eq "hidden" || $FW_hiddenroom{$r});
     $r =~ s/</&lt;/g;
     $r =~ s/>/&lt;/g;
     my $roomname = $r;
     $r =~ s/ /%20/g;
-    my $roomlink = "$FWA_ME?room=$r";
+    my $roomlink = "$FW_ME?room=$r";
     push(@list_rooms, { name => $roomname, link => $roomlink, key => $roomname });
   }
-  push(@list_rooms, { name => "Everything", link => "$FWA_ME?room=all", key => "all"});
+  push(@list_rooms, { name => "Everything", link => "$FW_ME?room=all", key => "all"});
   
   @list_admin = (
-     { name => "Commandref",     link => "$FWA_ME/docs/commandref.html", key => "commandref" },
+     { name => "Commandref",     link => "$FW_ME/docs/commandref.html", key => "commandref" },
      { name => "Remote doc",     link => "http://fhem.de/fhem.html#Documentation", key => "remotedoc" },
-     { name => "Edit files",     link => "$FWA_ME?cmd=style%20list", key => "editfiles" },
-     { name => "Select style",   link => "$FWA_ME?cmd=style%20select", key => "selectstyle" },
-     { name => "Event monitor",  link => "$FWA_ME?cmd=style%20eventMonitor", key => "eventmonitor" },
+     { name => "Edit files",     link => "$FW_ME?cmd=style%20list", key => "editfiles" },
+     #{ name => "Select style",   link => "$FW_ME?cmd=style%20select", key => "selectstyle" },
+     { name => "Event monitor",  link => "$FW_ME?cmd=style%20eventMonitor", key => "eventmonitor" },
   );
 
   my $lfn = "Logfile";
   if($defs{$lfn}) { # Add the current Logfile to the list if defined
     my @l = FWA_fileList($defs{$lfn}{logfile});
     my $fn = pop @l;
-    unshift(\@list_admin, {name => "Logfile", link => "$FWA_ME/FileLog_logWrapper?dev=$lfn&type=text&file=$fn"});
+    unshift(\@list_admin, {name => "Logfile", link => "$FW_ME/FileLog_logWrapper?dev=$lfn&type=text&file=$fn"});
   }
   
   my $data = {
@@ -1064,29 +1065,29 @@ FWA_menuList($)
 sub
 FWA_roomDetail()
 {
-  return if(!$FWA_room);
+  return if(!$FW_room);
   
   %FWA_hiddengroup = ();
-  foreach my $r (split(",",AttrVal($FWA_wname, "hiddengroup", ""))) {
+  foreach my $r (split(",",AttrVal($FW_wname, "hiddengroup", ""))) {
     $FWA_hiddengroup{$r} = 1;
   }
 
-  my $rf = ($FWA_room ? "&amp;room=$FWA_room" : ""); # stay in the room
+  my $rf = ($FW_room ? "&amp;room=$FW_room" : ""); # stay in the room
 
   # array of all device names in the room (exception weblinks without group
   # attribute)
-  my @devs= grep { ($FWA_rooms{$FWA_room}{$_}||$FWA_room eq "all") &&
+  my @devs= grep { ($FW_rooms{$FW_room}{$_}||$FW_room eq "all") &&
                       !IsIgnored($_) } keys %defs;
   my (%group, @atEnds, %usuallyAtEnd);
   foreach my $dev (@devs) {
-    if($modules{$defs{$dev}{TYPE}}{FWA_atPageEnd}) {
+    if($modules{$defs{$dev}{TYPE}}{FW_atPageEnd}) {
       $usuallyAtEnd{$dev} = 1;
       if(!AttrVal($dev, "group", undef)) {
         push @atEnds, $dev;
         next;
       }
     }
-    foreach my $grp (split(",", AttrVal($dev, "group", $FWA_types{$dev}))) {
+    foreach my $grp (split(",", AttrVal($dev, "group", $FW_types{$dev}))) {
       next if($FWA_hiddengroup{$grp}); 
       $group{$grp}{$dev} = 1;
     }
@@ -1111,7 +1112,7 @@ FWA_roomDetail()
       my $devName = AttrVal($d, "alias", $d);
       my $icon = AttrVal($d, "icon", "");
       $icon = FWA_makeImage($icon,$icon,"icon") . "&nbsp;" if($icon);
-      my $hiddenroom = $FWA_hiddenroom{detail};
+      my $hiddenroom = $FW_hiddenroom{detail};
              
       $row++;
 
@@ -1126,10 +1127,10 @@ FWA_roomDetail()
         my @c = split(' ', $cmd);
         if($allSets && $allSets =~ m/$c[0]:([^ ]*)/) {
           my $values = $1;
-          foreach my $fn (sort keys %{$data{webCmdFn}}) {
+          foreach my $fn (sort keys %{$data{webCmdAppFn}}) {
             no strict "refs";
-            $htmlTxt = &{$data{webCmdFn}{$fn}}($FWA_wname,
-                                               $d, $FWA_room, $cmd, $values);
+            $htmlTxt = &{$data{webCmdAppFn}{$fn}}($FW_wname,
+                                               $d, $FW_room, $cmd, $values);
             use strict "refs";
             last if(defined($htmlTxt));
           }
@@ -1168,17 +1169,19 @@ FWA_roomDetail()
                         lc(AttrVal($b, "sortby", AttrVal($b,"alias",$b))) }
                    @atEnds) {
     no strict "refs";
-    my $html = &{$modules{$defs{$d}{TYPE}}{FWA_summaryFn}}($FWA_wname, $d, 
-                                                        $FWA_room, \%extPage);
+    my $html = &{$modules{$defs{$d}{TYPE}}{FW_summaryFn}}($FW_wname, $d, 
+                                                        $FW_room, \%extPage);
     use strict "refs";
-    push(@atEnds, $html);
+    if(defined($html)){
+      push(@atEnds, mark_raw($html));
+    }
   }
 
   return FWA_render("room.tx", {
     groupedDevices => \%groupedDevices,
     atEnds => \@atEnds,
     rf => $rf,
-    roomname => $FWA_room,
+    roomname => $FW_room,
   });
 }
 
@@ -1188,10 +1191,10 @@ FWA_parseColumns()
   my %columns;
   my $colNo = -1;
 
-  foreach my $roomgroup (split("[ \t\r\n]+", AttrVal($FWA_wname,"column",""))) {
+  foreach my $roomgroup (split("[ \t\r\n]+", AttrVal($FW_wname,"column",""))) {
     my ($room, $groupcolumn)=split(":",$roomgroup);
     last if(!defined($room) || !defined($groupcolumn));
-    next if($room ne $FWA_room);
+    next if($room ne $FW_room);
     $colNo = 1;
     foreach my $groups (split(/\|/,$groupcolumn)) {
       foreach my $group (split(",",$groups)) {
@@ -1263,7 +1266,7 @@ FWA_returnFileAsStream($$$$$)
   }
 
   if(!open(FH, $path)) {
-    Log3 $FWA_wname, 2, "FHEMWEBAPP $FWA_wname $path: $!";
+    Log3 $FW_wname, 2, "FHEMWEBAPP $FW_wname $path: $!";
     FWA_pO "<div id=\"content\">$path: $!</div>";
     return 0;
   }
@@ -1343,7 +1346,7 @@ FWA_textfieldv($$$$)
   my ($n, $z, $class, $value) = @_;
   my $v;
   $v=" value=\"$value\"" if(defined($value));
-  return if($FWA_hiddenroom{input});
+  return if($FW_hiddenroom{input});
   my $s = "<input type=\"text\" name=\"$n\" class=\"$class\" size=\"$z\"$v/>";
   return $s;
 }
@@ -1397,7 +1400,7 @@ FWA_fileNameToPath($)
   } elsif($name =~ m/.*(css|svg)$/) {
     return "$FWA_appdir/$name";
   } elsif($name =~ m/.*gplot$/) {
-    return "$FWA_gplotdir/$name";
+    return "$FW_gplotdir/$name";
   } else {
     return "$MWA_dir/$name";
   }
@@ -1419,7 +1422,7 @@ FWA_style($$)
     my @cfg = ($1,);
     my @modules = FWA_fileList("$MWA_dir/^(.*sh|[0-9][0-9].*Util.*pm|.*cfg|.*holiday"."|.*layout)\$");
     my @styles = FWA_fileList("$FWA_appdir/css/^.*(css|svg)\$");
-    my @gplots = FWA_fileList("$FWA_gplotdir/^.*gplot\$");
+    my @gplots = FWA_fileList("$FW_gplotdir/^.*gplot\$");
     my @groups = ({
           name => "FHEM Config file",
           items => \@cfg,
@@ -1437,7 +1440,7 @@ FWA_style($$)
     my $data = {
       msg => $msg,
       groups => \@groups,
-      baseuri => "$FWA_ME$FWA_subdir",
+      baseuri => "$FW_ME$FW_subdir",
     };
 
     return FWA_render("style_list.tx", $data);
@@ -1459,9 +1462,9 @@ FWA_style($$)
 
   } elsif($a[1] eq "set") {
     if($a[2] eq "default") {
-      CommandDeleteAttr(undef, "$FWA_wname stylesheetPrefix");
+      CommandDeleteAttr(undef, "$FW_wname stylesheetPrefix");
     } else {
-      CommandAttr(undef, "$FWA_wname stylesheetPrefix $a[2]");
+      CommandAttr(undef, "$FW_wname stylesheetPrefix $a[2]");
     }
     FWA_pO "${start}Reload the page in the browser.$end";
 
@@ -1481,13 +1484,13 @@ FWA_style($$)
     return FWA_render("style_edit.tx", {
       file => $fileName,
       text => $data,
-      formmethod => $FWA_formmethod,
+      formmethod => $FW_formmethod,
       msg => $msg,
     });
   } elsif($a[1] eq "save") {
     my $fileName = $a[2];
-    $fileName = $FWA_webArgs{saveName}
-        if($FWA_webArgs{saveAs} && $FWA_webArgs{saveName});
+    $fileName = $FW_webArgs{saveName}
+        if($FW_webArgs{saveAs} && $FW_webArgs{saveName});
     $fileName =~ s,.*/,,g;        # Little bit of security
     my $filePath = FWA_fileNameToPath($fileName);
 
@@ -1522,7 +1525,7 @@ FWA_style($$)
     FWA_doDetail($a[2]);
 
   } elsif($a[1] eq "eventMonitor") {
-    FWA_pO "<script type=\"text/javascript\" src=\"$FWA_ME/pgm2/console.js\">".
+    FWA_pO "<script type=\"text/javascript\" src=\"$FW_ME/pgm2/console.js\">".
           "</script>";
     FWA_pO "<div id=\"content\">";
     FWA_pO "<div id=\"console\">";
@@ -1540,7 +1543,7 @@ FWA_iconTable($$$$)
   my ($name, $class, $cmdFmt, $textfield) = @_;
 
   my %icoList = ();
-  foreach my $style (@FWA_iconDirs) {
+  foreach my $style (@FW_icondirs) {
     foreach my $imgName (sort keys %{$FWA_icons{$style}}) {
       $imgName =~ s/\.[^.]*$//; # Cut extension
       next if(!$FWA_icons{$style}{$imgName}); # Dont cut it twice: FS20.on.png
@@ -1552,7 +1555,7 @@ FWA_iconTable($$$$)
   }
 
   FWA_pO "<div id=\"content\">";
-  FWA_pO "<form method=\"$FWA_formmethod\">";
+  FWA_pO "<form method=\"$FW_formmethod\">";
   if($textfield) {
     FWA_pO "$textfield:&nbsp;".FWA_textfieldv("data",20,"iconTable",".*")."<br>";
   }
@@ -1583,11 +1586,11 @@ FWA_pH(@)
   my ($link, $txt, $td, $class, $doRet,$nonl) = @_;
   my $ret;
 
-  $link = ($link =~ m,^/,) ? $link : "$FWA_ME$FWA_subdir?$link";
+  $link = ($link =~ m,^/,) ? $link : "$FW_ME$FW_subdir?$link";
   
   # Using onclick, as href starts safari in a webapp.
   # Known issue: the pointer won't change
-  if($FWA_ss || $FWA_tp) { 
+  if($FW_ss || $FW_tp) { 
     $ret = "<a onClick=\"location.href='$link'\">$txt</a>";
   } else {
     $ret = "<a href=\"$link\">$txt</a>";
@@ -1613,10 +1616,10 @@ FWA_pHPlain(@)
   $link = "?$link" if($link !~ m+^/+);
   my $ret = "";
   $ret .= "<td>" if($td);
-  if($FWA_ss || $FWA_tp) {
-    $ret .= "<a onClick=\"location.href='$FWA_ME$FWA_subdir$link'\">$txt</a>";
+  if($FW_ss || $FW_tp) {
+    $ret .= "<a onClick=\"location.href='$FW_ME$FW_subdir$link'\">$txt</a>";
   } else {
-    $ret .= "<a href=\"$FWA_ME$FWA_subdir$link\">$txt</a>";
+    $ret .= "<a href=\"$FW_ME$FW_subdir$link\">$txt</a>";
   }
   $ret .= "</td>" if($td);
   return $ret;
@@ -1637,7 +1640,7 @@ FWA_makeImage(@)
   my $p = FWA_iconPath($name);
   return $name if(!$p);
   if($p =~ m/\.svg$/i) {
-    if(open(FH, "$FWA_icondir/$p")) {
+    if(open(FH, "$FW_icondir/$p")) {
       <FH>; <FH>; <FH>; # Skip the first 3 lines;
       my $data = join("", <FH>);
       close(FH);
@@ -1662,7 +1665,7 @@ FWA_makeImage(@)
   } else {
     return FWA_render("image.tx", {
       class => $class,
-      src => "$FWA_ME/images/$p",
+      src => "$FW_ME/images/$p",
       txt => "$txt",
     });
   }
@@ -1673,7 +1676,7 @@ sub
 FWA_IconURL($) 
 {
   my ($name)= @_;
-  return "$FWA_ME/icons/$name";
+  return "$FW_ME/icons/$name";
 }
 
 ##################
@@ -1741,8 +1744,8 @@ FWA_Attr(@)
 }
 
 
-# recursion starts at $FWA_icondir/$dir
-# filenames are relative to $FWA_icondir
+# recursion starts at $FW_icondir/$dir
+# filenames are relative to $FW_icondir
 sub
 FWA_readIconsFrom($$)
 {
@@ -1750,18 +1753,18 @@ FWA_readIconsFrom($$)
 
   my $ldir = ($subdir ? "$dir/$subdir" : $dir);
   my @entries;
-  if(opendir(DH, "$FWA_icondir/$ldir")) {
+  if(opendir(DH, "$FW_icondir/$ldir")) {
     @entries= sort readdir(DH); # assures order: .gif  .ico  .jpg  .png .svg
     closedir(DH);
   }
 
   foreach my $entry (@entries) {
-    if( -d "$FWA_icondir/$ldir/$entry" ) {  # directory -> recurse
+    if( -d "$FW_icondir/$ldir/$entry" ) {  # directory -> recurse
       FWA_readIconsFrom($dir, $subdir ? "$subdir/$entry" : $entry)
         unless($entry eq "." || $entry eq ".." || $entry eq ".svn");
 
     } else {
-      if($entry =~ m/^iconalias.txt$/i && open(FH, "$FWA_icondir/$ldir/$entry")){
+      if($entry =~ m/^iconalias.txt$/i && open(FH, "$FW_icondir/$ldir/$entry")){
         while(my $l = <FH>) {
           chomp($l);
           my @a = split(" ", $l);
@@ -1797,7 +1800,7 @@ FWA_iconName($)
 {
   my ($name)= @_;
   $name =~ s/@.*//;
-  foreach my $pe (@FWA_iconDirs) {
+  foreach my $pe (@FW_icondirs) {
     return $name if($pe && $FWA_icons{$pe} && $FWA_icons{$pe}{$name});
   }
   return undef;
@@ -1812,7 +1815,7 @@ FWA_iconPath($)
 {
   my ($name) = @_;
   $name =~ s/@.*//;
-  foreach my $pe (@FWA_iconDirs) {
+  foreach my $pe (@FW_icondirs) {
     return "$pe/$FWA_icons{$pe}{$name}"
         if($pe && $FWA_icons{$pe} && $FWA_icons{$pe}{$name});
   }
@@ -1838,7 +1841,7 @@ FWA_dev2image($;$)
   my $devStateIcon = AttrVal($name, "devStateIcon", undef);
   if(defined($devStateIcon) && $devStateIcon =~ m/^{.*}$/) {
     my ($html, $link) = eval $devStateIcon;
-    Log3 $FWA_wname, 1, "devStateIcon $name: $@" if($@);
+    Log3 $FW_wname, 1, "devStateIcon $name: $@" if($@);
     return ($html, $link, 1) if(defined($html) && $html =~ m/^<.*>$/s);
     $devStateIcon = $html;
   }
@@ -1884,12 +1887,12 @@ FWA_makeEdit($$$)
   # my $eval = $val;
   # $eval = "<pre>$eval</pre>" if($eval =~ m/\n/);
   # my $cmd = "modify";
-  # my $ncols = $FWA_ss ? 30 : 60;
+  # my $ncols = $FW_ss ? 30 : 60;
 
   # my $html = FWA_render("edit.tx", {
     # n => $n,
     # eval => mark_raw($eval),
-    # formmethod => $FWA_formmethod,
+    # formmethod => $FW_formmethod,
     # cmdname => "$cmd.$name",
     # submit_name => "cmd.$cmd$name",
     # submit_value= => "$cmd $name"
@@ -1908,7 +1911,7 @@ FWA_roomStatesForInform($)
   foreach my $dn (keys %{$me->{inform}{devices}}) {
     next if(!defined($defs{$dn}));
     my $t = $defs{$dn}{TYPE};
-    next if(!$t || $modules{$t}{FWA_atPageEnd});
+    next if(!$t || $modules{$t}{FW_atPageEnd});
     my ($allSet, $cmdlist, $txt) = FWA_devState($dn, "", \%extPage);
     if($defs{$dn} && $defs{$dn}{STATE} && $defs{$dn}{TYPE} ne "weblink") {
       push @data, "$dn<<$defs{$dn}{STATE}<<$txt";
@@ -1934,22 +1937,22 @@ FWA_Notify($$)
 
   if($h->{type} =~ m/status/) {
     # Why is saving this stuff needed? FLOORPLAN?
-    my @old = ($FWA_wname, $FWA_ME, $FWA_ss, $FWA_tp, $FWA_subdir);
-    $FWA_wname = $ntfy->{SNAME};
-    $FWA_ME = "/" . AttrVal($FWA_wname, "webname", "fhem");
-    $FWA_subdir = "";
-    $FWA_sp = AttrVal($FWA_wname, "stylesheetPrefix", 0);
-    $FWA_ss = ($FWA_sp =~ m/smallscreen/);
-    $FWA_tp = ($FWA_sp =~ m/smallscreen|touchpad/);
-    @FWA_iconDirs = grep { $_ } split(":", AttrVal($FWA_wname, "iconPath",
-                                "$FWA_sp:default:fhemSVG:openautomation"));
+    my @old = ($FW_wname, $FW_ME, $FW_ss, $FW_tp, $FW_subdir);
+    $FW_wname = $ntfy->{SNAME};
+    $FW_ME = "/" . AttrVal($FW_wname, "webname", "fhem");
+    $FW_subdir = "";
+    $FW_sp = AttrVal($FW_wname, "stylesheetPrefix", 0);
+    $FW_ss = ($FW_sp =~ m/smallscreen/);
+    $FW_tp = ($FW_sp =~ m/smallscreen|touchpad/);
+    @FW_icondirs = grep { $_ } split(":", AttrVal($FW_wname, "iconPath",
+                                "$FW_sp:default:fhemSVG:openautomation"));
     if($h->{iconPath}) {
-      unshift @FWA_iconDirs, $h->{iconPath};
+      unshift @FW_icondirs, $h->{iconPath};
       FWA_readIcons($h->{iconPath});
     }
 
     my ($allSet, $cmdlist, $txt) = FWA_devState($dn, "", \%extPage);
-    ($FWA_wname, $FWA_ME, $FWA_ss, $FWA_tp, $FWA_subdir) = @old;
+    ($FW_wname, $FW_ME, $FW_ss, $FW_tp, $FW_subdir) = @old;
     push @data, "$dn<<$dev->{STATE}<<$txt";
 
     #Add READINGS
@@ -2040,34 +2043,34 @@ FWA_devState($$@)
   if($link) { # Have command to execute
     my $room = AttrVal($d, "room", undef);
     if($room) {
-      if($FWA_room && $room =~ m/\b$FWA_room\b/) {
-        $room = $FWA_room;
+      if($FW_room && $room =~ m/\b$FW_room\b/) {
+        $room = $FW_room;
       } else {
         $room =~ s/,.*//;
       }
       $link .= "&room=$room";
     }
     
-    if(AttrVal($FWA_wname, "longpoll", 1)) {
-      $link = "$FWA_ME$FWA_subdir?XHR=1&$link";
+    if(AttrVal($FW_wname, "longpoll", 1)) {
+      $link = "$FW_ME$FW_subdir?XHR=1&$link";
       $style .= " longpoll";
-    } elsif($FWA_ss || $FWA_tp) {
+    } elsif($FW_ss || $FW_tp) {
       $style .= " onclick";
-      $link = "$FWA_ME$FWA_subdir?$link$rf";
+      $link = "$FW_ME$FW_subdir?$link$rf";
     } else {
-      $link = "$FWA_ME$FWA_subdir?$link$rf";
+      $link = "$FW_ME$FW_subdir?$link$rf";
     }
   }
 
   my $type = $defs{$d}{TYPE};
-  my $sfn = $modules{$type}{FWA_summaryFn};
+  my $sfn = $modules{$type}{FW_summaryFn};
   if($sfn) {
     if(!defined($extPage)) {
        my %hash;
        $extPage = \%hash;
     }
     no strict "refs";
-    my $newtxt = &{$sfn}($FWA_wname, $d, $FWA_room, $extPage);
+    my $newtxt = &{$sfn}($FW_wname, $d, $FW_room, $extPage);
     use strict "refs";
     $txt = $newtxt if(defined($newtxt)); # As specified
   }
@@ -2080,19 +2083,19 @@ sub
 FWA_Get($@)
 {
   my ($hash, @a) = @_;
-  $FWA_wname= $hash->{NAME};
+  $FW_wname= $hash->{NAME};
 
   my $arg = (defined($a[1]) ? $a[1] : "");
   if($arg eq "icon") {
     return "need one icon as argument" if(int(@a) != 3);
     my $icon = FWA_iconPath($a[2]);
-    return defined($icon) ? "$FWA_icondir/$icon" : "no such icon";
+    return defined($icon) ? "$FW_icondir/$icon" : "no such icon";
 
   } elsif($arg eq "pathlist") {
-    return "web server root:      $FWA_dir\n".
-           "icon directory:       $FWA_icondir\n".
+    return "web server root:      $FW_dir\n".
+           "icon directory:       $FW_icondir\n".
            "css directory:        $FWA_appdir\n".
-           "gplot directory:      $FWA_gplotdir";
+           "gplot directory:      $FW_gplotdir";
 
   } else {
     return "Unknown argument $arg choose one of icon pathlist:noArg";
@@ -2121,7 +2124,7 @@ FWA_Set($@)
     }
   }
   if($a[1] eq "clearSvgCache") {
-    my $cDir = "$FWA_dir/SVGcache";
+    my $cDir = "$FW_dir/SVGcache";
     if(opendir(DH, $cDir)) {
       map { my $n="$cDir/$_"; unlink($n) if(-f $n); } readdir(DH);;
       closedir(DH);
@@ -2141,7 +2144,7 @@ FWA_closeOldClients()
     next if(!$defs{$dev}{TYPE} || $defs{$dev}{TYPE} ne "FHEMWEBAPP" ||
             !$defs{$dev}{LASTACCESS} || $defs{$dev}{inform} ||
             ($now - $defs{$dev}{LASTACCESS}) < 60);
-    Log3 $FWA_wname, 4, "Closing connection $dev";
+    Log3 $FW_wname, 4, "Closing connection $dev";
     FWA_Undef($defs{$dev}, "");
     delete $defs{$dev};
   }
@@ -2162,12 +2165,12 @@ FWA_htmlEscape($)
 sub
 FWA_sliderFn($$$$$)
 {
-  my ($FWA_wname, $d, $FWA_room, $cmd, $values) = @_;
+  my ($FW_wname, $d, $FW_room, $cmd, $values) = @_;
 
   return undef if($values !~ m/^slider,(.*),(.*),(.*)$/);
   return "" if($cmd =~ m/ /);   # webCmd pct 30 should generate a link
   my ($min,$stp, $max) = ($1, $2, $3);
-  my $srf = $FWA_room ? "&room=$FWA_room" : "";
+  my $srf = $FW_room ? "&room=$FW_room" : "";
   my $cv = ReadingsVal($d, $cmd, Value($d));
   my $id = ($cmd eq "state") ? "" : "-$cmd";
   $cmd = "" if($cmd eq "state");
@@ -2175,7 +2178,7 @@ FWA_sliderFn($$$$$)
   $cv = 0 if($cv !~ m/\d/);
   return "<td colspan='2'>".
            "<div class='slider' id='slider.$d$id' min='$min' stp='$stp' ".
-                 "max='$max' cmd='$FWA_ME?cmd=set $d $cmd %$srf'>".
+                 "max='$max' cmd='$FW_ME?cmd=set $d $cmd %$srf'>".
              "<div class='handle'>$min</div>".
            "</div>".
            "<script type=\"text/javascript\">".
@@ -2187,7 +2190,7 @@ FWA_sliderFn($$$$$)
 sub
 FWA_noArgFn($$$$$)
 {
-  my ($FWA_wname, $d, $FWA_room, $cmd, $values) = @_;
+  my ($FW_wname, $d, $FW_room, $cmd, $values) = @_;
 
   return undef if($values !~ m/^noArg$/);
   return "";
@@ -2196,14 +2199,14 @@ FWA_noArgFn($$$$$)
 sub
 FWA_timepickerFn()
 {
-  my ($FWA_wname, $d, $FWA_room, $cmd, $values) = @_;
+  my ($FW_wname, $d, $FW_room, $cmd, $values) = @_;
 
   return undef if($values ne "time");
   return "" if($cmd =~ m/ /);   # webCmd on-for-timer 30 should generate a link
-  my $srf = $FWA_room ? "&room=$FWA_room" : "";
+  my $srf = $FW_room ? "&room=$FW_room" : "";
   my $cv = ReadingsVal($d, $cmd, Value($d));
   $cmd = "" if($cmd eq "state");
-  my $c = "\"$FWA_ME?cmd=set $d $cmd %$srf\"";
+  my $c = "\"$FW_ME?cmd=set $d $cmd %$srf\"";
   return "<td colspan='2'>".
             "<input name='time.$d' value='$cv' type='text' readonly size='5'>".
             "<input type='button' value='+' onclick='FWA_timeCreate(this,$c)'>".
@@ -2213,7 +2216,7 @@ FWA_timepickerFn()
 sub 
 FWA_dropdownFn()
 {
-  my ($FWA_wname, $d, $FWA_room, $cmd, $values) = @_;
+  my ($FW_wname, $d, $FW_room, $cmd, $values) = @_;
 
   return "" if($cmd =~ m/ /);   # webCmd temp 30 should generate a link
   my @tv = split(",", $values);
@@ -2240,7 +2243,7 @@ FWA_dropdownFn()
     };
 
     return FWA_render("dropdown.tx", {
-        formmethod => $FWA_formmethod,
+        formmethod => $FW_formmethod,
         device => $d,
         select => $select,
       });
@@ -2251,17 +2254,17 @@ FWA_dropdownFn()
 sub
 FWA_textFieldFn($$$$)
 {
-  my ($FWA_wname, $d, $FWA_room, $cmd, $values) = @_;
+  my ($FW_wname, $d, $FW_room, $cmd, $values) = @_;
 
   my @args = split("[ \t]+", $cmd);
 
   return undef if($values !~ m/^textField$/);
   return "" if($cmd =~ m/ /);
-  my $srf = $FWA_room ? "&room=$FWA_room" : "";
+  my $srf = $FW_room ? "&room=$FW_room" : "";
   my $cv = ReadingsVal($d, $cmd, "");
   my $id = ($cmd eq "state") ? "" : "-$cmd";
 
-  my $c = "$FWA_ME?XHR=1&cmd=setreading $d $cmd %$srf";
+  my $c = "$FW_ME?XHR=1&cmd=setreading $d $cmd %$srf";
   return '<td align="center">'.
            "<div>$cmd:<input id='textField.$d$id' type='text' value='$cv' ".
                         "onChange='textField_setText(this,\"$c\")'></div>".

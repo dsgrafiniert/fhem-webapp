@@ -7,7 +7,7 @@ use warnings;
 use TcpServerUtils;
 use HttpUtils;
 use Text::Xslate qw(mark_raw);
-
+use Data::Dumper;
 #########################
 # Forward declaration
 sub FWA_IconURL($);
@@ -1141,8 +1141,11 @@ FWA_roomDetail()
           #FWA_pH "cmd.$d=set $d $cmd$rf", $cmd, 1, "col3"; #TODO: SOLVE THIS
         }
       }
-        
-      
+
+      my @states = $devicestate =~ /\b([a-z,A-Z,0-9]*: [a-z,A-Z,0-9,\.]*)\b/g;        
+      if (scalar(@states) == 0){
+        push(@states, $devicestate);
+      }     
       my $device = {
         device => $d,
         type => $type,
@@ -1151,6 +1154,7 @@ FWA_roomDetail()
         style => $style,
         name => $devName,
         state => $devicestate,
+        states => \@states,
         icon => mark_raw($icon),
         hiddenroom => $hiddenroom,
         allSets => $allSets,

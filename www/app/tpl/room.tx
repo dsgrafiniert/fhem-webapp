@@ -14,7 +14,11 @@
 : if $device.link {
 						<a href="<: $device.link :>" class="btn btn-primary col-md-2 <: $device.style :>"><: $device.state :></a>
 : } else {
+: if $device.type == "readingsGroup" {
+<: $device.state :>
+: } else {
 						<div class="btn btn-primary disabled col-md-2"><: $device.state :></div>
+: }
 : }
                             <div class="col-md-10 pull-right align-right">
 :for $device.htmlCmdList.reverse() -> $htmlCmd {
